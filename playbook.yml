@@ -7,7 +7,6 @@
     RTE_TARGET: "{{ dpdk_target }}"
 
   tasks:
-
     - name: Install development tools
       yum: name="@Development tools" state=present
 
@@ -18,6 +17,7 @@
         - kernel-devel
         - kernel-headers
         - pciutils
+        - net-tools
 
     - name: Alter kernel boot parameters
       lineinfile:
@@ -33,6 +33,9 @@
       command: /sbin/reboot
       ignore_errors: true
 
+    #
+    # TODO: need to extract ip from a variable somehow
+    #
     - name: Wait for reboot
       local_action: wait_for state=started host=192.168.3.3 port=22 timeout=30
       sudo: false
@@ -44,6 +47,9 @@
         creates: "/opt/dpdk-{{ dpdk_version }}"
         copy: no
 
+    #
+    # tools/setup.sh option [9] x86_64-ivshmem-linuxapp-gcc
+    #
     - name: Build DPDK
       shell: printf '9 \n \n 34 \n' | ./tools/setup.sh
       args:
@@ -53,18 +59,34 @@
       shell: EXTRA_CFLAGS="-g -Ofast" make -j10
       args:
         chdir: "/opt/dpdk-{{ dpdk_version }}/{{ dpdk_target }}"
-
+    #
+    # tools/setup.sh option [20] Setup hugepage mappings for non-NUMA systems
+    #
     - name: Setup hugepage mappings
       shell: printf "20 \n 16 \n \n 34 \n" | ./tools/setup.sh
       args:
         chdir: "/opt/dpdk-{{ dpdk_version }}"
 
+    #
+    # tools/setup.sh option [17] Insert IGB UIO module
+    #
     - name: Insert IGB UIO module
       shell: printf "17 \n \n 34 \n" | ./tools/setup.sh
       args:
         chdir: "/opt/dpdk-{{ dpdk_version }}"
 
-    - name: Bind device to IGB UIO module
-      shell: printf "23 \n \n 34 \n" | ./tools/setup.sh
+    #
+    # TODO: how to discover which interface to deactivate?
+    #
+    - name: Deactive the network interface
+      shell: ifdown eth1
+
+    #
+    # tools/setup.sh option [23] Bind Ethernet device to IGB UIO module
+    #
+    # TODO: how to discover the pci address 'lspci'?? 
+    #
+    - name: Bind network device to IGB UIO module
+      shell: printf "23 \n 00:08.0 \n \n 34 \n" | ./tools/setup.sh
       args:
         chdir: "/opt/dpdk-{{ dpdk_version }}"
