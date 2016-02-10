@@ -1,0 +1,70 @@
+---
+- hosts: all
+  sudo: yes
+
+  environment:
+    RTE_SDK: "/opt/dpdk-{{ dpdk_version }}"
+    RTE_TARGET: "{{ dpdk_target }}"
+
+  tasks:
+
+    - name: Install development tools
+      yum: name="@Development tools" state=present
+
+    - name: Install prerequisites
+      yum: name={{ item }} state=latest
+      with_items:
+        - kernel
+        - kernel-devel
+        - kernel-headers
+        - pciutils
+
+    - name: Alter kernel boot parameters
+      lineinfile:
+        dest: /etc/default/grub
+        regexp:  '^(GRUB_CMDLINE_LINUX=\"[^\"]+)\"$'
+        line: '\1 default_hugepagesz=1G hugepagesz=1G hugepages=16 iommu=pt intel_iommu=on"'
+        backrefs: yes
+
+    - name: Update grub with kernel boot parameters
+      shell: /sbin/grub2-mkconfig -o /boot/grub2/grub.cfg
+
+    - name: Reboot to use new kernel boot parameters
+      command: /sbin/reboot
+      ignore_errors: true
+
+    - name: Wait for reboot
+      local_action: wait_for state=started host=192.168.3.3 port=22 timeout=30
+      sudo: false
+
+    - name: Download DPDK-{{ dpdk_version }}
+      unarchive:
+        src: "http://dpdk.org/browse/dpdk/snapshot/dpdk-{{ dpdk_version }}.tar.gz"
+        dest: "/opt"
+        creates: "/opt/dpdk-{{ dpdk_version }}"
+        copy: no
+
+    - name: Build DPDK
+      shell: printf '9 \n \n 34 \n' | ./tools/setup.sh
+      args:
+        chdir: "/opt/dpdk-{{ dpdk_version }}"
+
+    - name: Build DPDK kernel modules
+      shell: EXTRA_CFLAGS="-g -Ofast" make -j10
+      args:
+        chdir: "/opt/dpdk-{{ dpdk_version }}/{{ dpdk_target }}"
+
+    - name: Setup hugepage mappings
+      shell: printf "20 \n 16 \n \n 34 \n" | ./tools/setup.sh
+      args:
+        chdir: "/opt/dpdk-{{ dpdk_version }}"
+
+    - name: Insert IGB UIO module
+      shell: printf "17 \n \n 34 \n" | ./tools/setup.sh
+      args:
+        chdir: "/opt/dpdk-{{ dpdk_version }}"
+
+    - name: Bind device to IGB UIO module
+      shell: printf "23 \n \n 34 \n" | ./tools/setup.sh
+      args:
+        chdir: "/opt/dpdk-{{ dpdk_version }}"
