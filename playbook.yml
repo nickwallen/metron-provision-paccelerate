@@ -48,10 +48,23 @@
         copy: no
 
     #
+    # the 'tools/setup.sh' script bundled with DPDK is very useful for setting
+    # up the environment.  the script is driven by an interactive command
+    # prompt.  the following values are used to drive the script.  these values
+    # may change in future versions of DPDK (they have changed from past versions).
+    #
+    - set_fact:
+        build_cmd: 9
+        hugepage_cmd: 20
+        insert_uio_cmd: 17
+        bind_nic_cmd: 23
+        exit_cmd: 34
+
+    #
     # tools/setup.sh option [9] x86_64-ivshmem-linuxapp-gcc
     #
     - name: Build DPDK
-      shell: printf '9 \n \n 34 \n' | ./tools/setup.sh
+      shell: "printf '{{ build_cmd }} \n \n {{ exit_cmd }} \n' | ./tools/setup.sh"
       args:
         chdir: "/opt/dpdk-{{ dpdk_version }}"
 
@@ -59,11 +72,12 @@
       shell: EXTRA_CFLAGS="-g -Ofast" make -j10
       args:
         chdir: "/opt/dpdk-{{ dpdk_version }}/{{ dpdk_target }}"
+
     #
     # tools/setup.sh option [20] Setup hugepage mappings for non-NUMA systems
     #
     - name: Setup hugepage mappings
-      shell: "printf '20 \n {{ num_huge_pages }} \n \n 34 \n' | ./tools/setup.sh"
+      shell: "printf '{{ hugepage_cmd }} \n {{ num_huge_pages }} \n \n {{ exit_cmd }} \n' | ./tools/setup.sh"
       args:
         chdir: "/opt/dpdk-{{ dpdk_version }}"
 
@@ -71,7 +85,7 @@
     # tools/setup.sh option [17] Insert IGB UIO module
     #
     - name: Insert IGB UIO module
-      shell: printf "17 \n \n 34 \n" | ./tools/setup.sh
+      shell: "printf '{{ insert_uio_cmd }} \n \n {{ exit_cmd }} \n' | ./tools/setup.sh"
       args:
         chdir: "/opt/dpdk-{{ dpdk_version }}"
 
@@ -79,7 +93,7 @@
     # TODO: how to discover which interface to deactivate?
     #
     - name: Deactive the network interface
-      shell: ifdown eth1
+      shell: ifconfig eth1 down
 
     #
     # tools/setup.sh option [23] Bind Ethernet device to IGB UIO module
@@ -87,6 +101,6 @@
     # TODO: how to discover the pci address 'lspci'??
     #
     - name: Bind network device to IGB UIO module
-      shell: printf "23 \n 00:08.0 \n \n 34 \n" | ./tools/setup.sh
+      shell: "printf '{{ bind_nic_cmd }} \n 00:08.0 \n \n {{ exit_cmd }}\n' | ./tools/setup.sh"
       args:
         chdir: "/opt/dpdk-{{ dpdk_version }}"
