@@ -1,10 +1,16 @@
+#
+# works on either virtualbox or libvirt
+#
 
+# host resources
+cpus = 2
+mem = 2048
 
 Vagrant.configure("2") do |config|
 
   # enable hostmanager
-  # config.hostmanager.enabled = true
-  # config.hostmanager.manage_host = true
+  config.hostmanager.enabled = true
+  config.hostmanager.manage_host = true
 
   config.vm.define :node do |node|
 
@@ -14,10 +20,16 @@ Vagrant.configure("2") do |config|
     node.vm.network :private_network, ip: "192.168.3.3"
     node.ssh.insert_key = "true"
 
-    # provider settings
-    node.vm.provider :libvirt do |libvirt|
-        libvirt.memory = 2048
-        libvirt.cpus = 2
+    # libvirt provider settings - ignored if not applicable
+    node.vm.provider :libvirt do |vt|
+        vt.memory = mem
+        vt.cpus = cpus
+    end
+
+    # virtualbox provider settings - ignored if not applicable
+    node.vm.provider "virtualbox" do |vb|
+      vb.memory = mem
+      vb.cpus = cpus
     end
 
     # provisioning with ansible
