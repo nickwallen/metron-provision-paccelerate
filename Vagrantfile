@@ -36,6 +36,7 @@ Vagrant.configure("2") do |config|
     node.vm.provision :ansible do |ansible|
       ansible.playbook = "playbook.yml"
       ansible.extra_vars = {
+        dpdk_device: "eth1",
         dpdk_version: "2.2.0",
         dpdk_target: "x86_64-ivshmem-linuxapp-gcc",
         num_huge_pages: 512

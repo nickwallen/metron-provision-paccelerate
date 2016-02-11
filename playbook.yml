@@ -10,6 +10,9 @@
     - name: Install development tools
       yum: name="@Development tools" state=present
 
+    - name: Update all packages
+      yum: name=* state=latest
+
     - name: Install prerequisites
       yum: name={{ item }} state=latest
       with_items:
@@ -19,19 +22,29 @@
         - pciutils
         - net-tools
 
+    - set_fact:
+        expected_kernel_params: "default_hugepagesz=1G hugepagesz=1G hugepages=16 iommu=pt intel_iommu=on"
+
+    - name: Check kernel boot parameters
+      shell: "cat /proc/cmdline"
+      register: actual_kernel_params
+
     - name: Alter kernel boot parameters
       lineinfile:
         dest: /etc/default/grub
         regexp:  '^(GRUB_CMDLINE_LINUX=\"[^\"]+)\"$'
-        line: '\1 default_hugepagesz=1G hugepagesz=1G hugepages=16 iommu=pt intel_iommu=on"'
+        line: '\1 {{ expected_kernel_params }}"'
         backrefs: yes
+      when: not expected_kernel_params in actual_kernel_params.stdout
 
     - name: Update grub with kernel boot parameters
       shell: /sbin/grub2-mkconfig -o /boot/grub2/grub.cfg
+      when: not expected_kernel_params in actual_kernel_params.stdout
 
     - name: Reboot to use new kernel boot parameters
       command: /sbin/reboot
       ignore_errors: true
+      when: not expected_kernel_params in actual_kernel_params.stdout
 
     #
     # TODO: need to extract ip from a variable somehow
@@ -39,6 +52,7 @@
     - name: Wait for reboot
       local_action: wait_for state=started host=192.168.3.3 port=22 timeout=30
       sudo: false
+      when: not expected_kernel_params in actual_kernel_params.stdout
 
     - name: Download DPDK-{{ dpdk_version }}
       unarchive:
@@ -67,6 +81,7 @@
       shell: "printf '{{ build_cmd }} \n \n {{ exit_cmd }} \n' | ./tools/setup.sh"
       args:
         chdir: "/opt/dpdk-{{ dpdk_version }}"
+        creates: "/opt/dpdk-{{ dpdk_version }}/{{ dpdk_target }}"
 
     - name: Build DPDK kernel modules
       shell: EXTRA_CFLAGS="-g -Ofast" make -j10
@@ -89,18 +104,19 @@
       args:
         chdir: "/opt/dpdk-{{ dpdk_version }}"
 
-    #
-    # TODO: how to discover which interface to deactivate?
-    #
-    - name: Deactive the network interface
-      shell: ifconfig eth1 down
+    - name: Deactivate {{ dpdk_device }}
+      shell: "ifconfig {{ dpdk_device }} down"
+      ignore_errors: true
+
+    - name: Discover PCI address of {{ dpdk_device }}
+      shell: "/sbin/ethtool -i {{ dpdk_device }} | grep bus-info | awk '{print $2}'"
+      register: pci
 
     #
     # tools/setup.sh option [23] Bind Ethernet device to IGB UIO module
     #
-    # TODO: how to discover the pci address 'lspci'??
-    #
-    - name: Bind network device to IGB UIO module
-      shell: "printf '{{ bind_nic_cmd }} \n 00:08.0 \n \n {{ exit_cmd }}\n' | ./tools/setup.sh"
+    - name: Bind device to IGB UIO module
+      shell: "printf '{{ bind_nic_cmd }} \n {{ item }} \n \n {{ exit_cmd }}\n' | ./tools/setup.sh"
       args:
         chdir: "/opt/dpdk-{{ dpdk_version }}"
+      with_items: pci.stdout_lines
