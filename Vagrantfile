@@ -37,7 +37,8 @@ Vagrant.configure("2") do |config|
       ansible.playbook = "playbook.yml"
       ansible.extra_vars = {
         dpdk_version: "2.2.0",
-        dpdk_target: "x86_64-ivshmem-linuxapp-gcc"
+        dpdk_target: "x86_64-ivshmem-linuxapp-gcc",
+        num_huge_pages: 512
       }
     end
   end

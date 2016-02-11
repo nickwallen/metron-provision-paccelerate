@@ -63,7 +63,7 @@
     # tools/setup.sh option [20] Setup hugepage mappings for non-NUMA systems
     #
     - name: Setup hugepage mappings
-      shell: printf "20 \n 16 \n \n 34 \n" | ./tools/setup.sh
+      shell: "printf '20 \n {{ num_huge_pages }} \n \n 34 \n' | ./tools/setup.sh"
       args:
         chdir: "/opt/dpdk-{{ dpdk_version }}"
 
@@ -84,7 +84,7 @@
     #
     # tools/setup.sh option [23] Bind Ethernet device to IGB UIO module
     #
-    # TODO: how to discover the pci address 'lspci'?? 
+    # TODO: how to discover the pci address 'lspci'??
     #
     - name: Bind network device to IGB UIO module
       shell: printf "23 \n 00:08.0 \n \n 34 \n" | ./tools/setup.sh
