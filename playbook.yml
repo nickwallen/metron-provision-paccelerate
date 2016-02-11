@@ -46,11 +46,8 @@
       ignore_errors: true
       when: not expected_kernel_params in actual_kernel_params.stdout
 
-    #
-    # TODO: need to extract ip from a variable somehow
-    #
     - name: Wait for reboot
-      local_action: wait_for state=started host=192.168.3.3 port=22 timeout=30
+      local_action: wait_for state=started host={{ ansible_eth1.ipv4.address }} port=22 timeout=30
       sudo: false
       when: not expected_kernel_params in actual_kernel_params.stdout
 
@@ -104,19 +101,24 @@
       args:
         chdir: "/opt/dpdk-{{ dpdk_version }}"
 
-    - name: Deactivate {{ dpdk_device }}
-      shell: "ifconfig {{ dpdk_device }} down"
+    - name: Deactivate network device(s) {{ dpdk_device }}
+      shell: "ifconfig {{ item }} down"
       ignore_errors: true
+      with_items: "{{ dpdk_device }}"
 
     - name: Discover PCI address of {{ dpdk_device }}
-      shell: "/sbin/ethtool -i {{ dpdk_device }} | grep bus-info | awk '{print $2}'"
+      shell: "/sbin/ethtool -i {{ item }} | grep bus-info | awk '{print $2}'"
       register: pci
+      with_items: "{{ dpdk_device }}"
+
+    - debug: msg="Found {{ item }}"
+      with_items: pci.results
 
     #
     # tools/setup.sh option [23] Bind Ethernet device to IGB UIO module
     #
     - name: Bind device to IGB UIO module
-      shell: "printf '{{ bind_nic_cmd }} \n {{ item }} \n \n {{ exit_cmd }}\n' | ./tools/setup.sh"
+      shell: "printf '{{ bind_nic_cmd }} \n {{ item.stdout }} \n \n {{ exit_cmd }}\n' | ./tools/setup.sh"
       args:
         chdir: "/opt/dpdk-{{ dpdk_version }}"
-      with_items: pci.stdout_lines
+      with_items: pci.results
