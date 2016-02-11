@@ -51,13 +51,6 @@
       sudo: false
       when: not expected_kernel_params in actual_kernel_params.stdout
 
-    - name: Download DPDK-{{ dpdk_version }}
-      unarchive:
-        src: "http://dpdk.org/browse/dpdk/snapshot/dpdk-{{ dpdk_version }}.tar.gz"
-        dest: "/opt"
-        creates: "/opt/dpdk-{{ dpdk_version }}"
-        copy: no
-
     #
     # the 'tools/setup.sh' script bundled with DPDK is very useful for setting
     # up the environment.  the script is driven by an interactive command
@@ -70,6 +63,13 @@
         insert_uio_cmd: 17
         bind_nic_cmd: 23
         exit_cmd: 34
+
+    - name: Download DPDK-{{ dpdk_version }}
+      unarchive:
+        src: "http://dpdk.org/browse/dpdk/snapshot/dpdk-{{ dpdk_version }}.tar.gz"
+        dest: "/opt"
+        creates: "/opt/dpdk-{{ dpdk_version }}"
+        copy: no
 
     #
     # tools/setup.sh option [9] x86_64-ivshmem-linuxapp-gcc
@@ -110,9 +110,6 @@
       shell: "/sbin/ethtool -i {{ item }} | grep bus-info | awk '{print $2}'"
       register: pci
       with_items: "{{ dpdk_device }}"
-
-    - debug: msg="Found {{ item }}"
-      with_items: pci.results
 
     #
     # tools/setup.sh option [23] Bind Ethernet device to IGB UIO module
