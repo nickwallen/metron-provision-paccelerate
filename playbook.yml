@@ -7,6 +7,12 @@
     RTE_TARGET: "{{ dpdk_target }}"
 
   tasks:
+
+    #
+    # install prerequisite packages and the latest kernel headers.  need to
+    # ensure that the kernel headers match the current running kernel version.
+    # if this is not the case, the DPDK build process will fail
+    #
     - name: Install development tools
       yum: name="@Development tools" state=present
 
@@ -22,6 +28,10 @@
         - pciutils
         - net-tools
 
+    #
+    # DPDK requires specific kernel boot parameters.  set the params and reboot
+    # the host, if the actual params differ from what is expected.
+    #
     - set_fact:
         expected_kernel_params: "default_hugepagesz=1G hugepagesz=1G hugepages=16 iommu=pt intel_iommu=on"
 
@@ -52,6 +62,16 @@
       when: not expected_kernel_params in actual_kernel_params.stdout
 
     #
+    # download and compile DPDK
+    #
+    - name: Download DPDK-{{ dpdk_version }}
+      unarchive:
+        src: "http://dpdk.org/browse/dpdk/snapshot/dpdk-{{ dpdk_version }}.tar.gz"
+        dest: "/opt"
+        creates: "/opt/dpdk-{{ dpdk_version }}"
+        copy: no
+
+    #
     # the 'tools/setup.sh' script bundled with DPDK is very useful for setting
     # up the environment.  the script is driven by an interactive command
     # prompt.  the following values are used to drive the script.  these values
@@ -64,16 +84,7 @@
         bind_nic_cmd: 23
         exit_cmd: 34
 
-    - name: Download DPDK-{{ dpdk_version }}
-      unarchive:
-        src: "http://dpdk.org/browse/dpdk/snapshot/dpdk-{{ dpdk_version }}.tar.gz"
-        dest: "/opt"
-        creates: "/opt/dpdk-{{ dpdk_version }}"
-        copy: no
-
-    #
-    # tools/setup.sh option [9] x86_64-ivshmem-linuxapp-gcc
-    #
+    # > tools/setup.sh option [9] x86_64-ivshmem-linuxapp-gcc
     - name: Build DPDK
       shell: "printf '{{ build_cmd }} \n \n {{ exit_cmd }} \n' | ./tools/setup.sh"
       args:
@@ -86,7 +97,10 @@
         chdir: "/opt/dpdk-{{ dpdk_version }}/{{ dpdk_target }}"
 
     #
-    # tools/setup.sh option [20] Setup hugepage mappings for non-NUMA systems
+    # setup hugepage mappings as DPDK performs its own internal memory
+    # management
+    #
+    # > tools/setup.sh option [20] Setup hugepage mappings for non-NUMA systems
     #
     - name: Setup hugepage mappings
       shell: "printf '{{ hugepage_cmd }} \n {{ num_huge_pages }} \n \n {{ exit_cmd }} \n' | ./tools/setup.sh"
@@ -94,13 +108,20 @@
         chdir: "/opt/dpdk-{{ dpdk_version }}"
 
     #
-    # tools/setup.sh option [17] Insert IGB UIO module
+    # insert the UIO module to enable direct device access from inside
+    # the virtual machine.
+    #
+    # > tools/setup.sh option [17] Insert IGB UIO module
     #
     - name: Insert IGB UIO module
       shell: "printf '{{ insert_uio_cmd }} \n \n {{ exit_cmd }} \n' | ./tools/setup.sh"
       args:
         chdir: "/opt/dpdk-{{ dpdk_version }}"
 
+    #
+    # bind the network device to the UIO module so that the device can be
+    # accessed using the DPDK API.
+    #
     - name: Deactivate network device(s) {{ dpdk_device }}
       shell: "ifconfig {{ item }} down"
       ignore_errors: true
@@ -111,9 +132,7 @@
       register: pci
       with_items: "{{ dpdk_device }}"
 
-    #
-    # tools/setup.sh option [23] Bind Ethernet device to IGB UIO module
-    #
+    # > tools/setup.sh option [23] Bind Ethernet device to IGB UIO module
     - name: Bind device to IGB UIO module
       shell: "printf '{{ bind_nic_cmd }} \n {{ item.stdout }} \n \n {{ exit_cmd }}\n' | ./tools/setup.sh"
       args:
