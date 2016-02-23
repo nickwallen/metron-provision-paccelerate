@@ -9,16 +9,8 @@ Getting Started
 ### Virtualbox
 
 ```
-vagrant plugin install vagrant-hostmanager
-vagrant up --provider=virtualbox
-```
-
-### Libvirt
-
-```
-vagrant plugin install vagrant-hostmanager
-vagrant plugin install vagrant-libvirt
-vagrant up --provider=libvirt
+ansible-galaxy install -r requirements.yml
+vagrant up 
 ```
 
 ### Validation

@@ -1,0 +1,27 @@
+---
+  # environment:
+  #   RTE_SDK: "/opt/dpdk-{{ dpdk_version }}"
+  #   RTE_TARGET: "{{ dpdk_target }}"
+
+  - name: Update all packages
+    yum: name=* state=present
+    with_items:
+      - "@Development tools"
+      - pciutils
+      - net-tools
+
+  #
+  # install prerequisite packages and the latest kernel headers.  need to
+  # ensure that the kernel headers match the current running kernel version.
+  # if this is not the case, the DPDK build process will fail
+  #
+  - name: Install prerequisites
+    yum: name={{ item }} state=latest
+    with_items:
+      - kernel
+      - kernel-devel
+      - kernel-headers
+
+  - include: kernel.yml
+
+  - include: dpdk.yml

@@ -1,0 +1,33 @@
+---
+  #
+  # DPDK requires specific kernel boot parameters.  set the params and reboot
+  # the host, if the actual params differ from what is expected.
+  #
+  - set_fact:
+      expected_kernel_params: "default_hugepagesz=1G hugepagesz=1G hugepages={{ num_huge_pages }} iommu=pt intel_iommu=on"
+
+  - name: Check kernel boot parameters
+    shell: "cat /proc/cmdline"
+    register: actual_kernel_params
+
+  - name: Alter kernel boot parameters
+    lineinfile:
+      dest: /etc/default/grub
+      regexp:  '^(GRUB_CMDLINE_LINUX=\"[^\"]+)\"$'
+      line: '\1 {{ expected_kernel_params }}"'
+      backrefs: yes
+    when: not expected_kernel_params in actual_kernel_params.stdout
+
+  - name: Update grub with kernel boot parameters
+    shell: /sbin/grub2-mkconfig -o /boot/grub2/grub.cfg
+    when: not expected_kernel_params in actual_kernel_params.stdout
+
+  - name: Reboot to use new kernel boot parameters
+    command: /sbin/reboot
+    ignore_errors: true
+    when: not expected_kernel_params in actual_kernel_params.stdout
+
+  - name: Wait for reboot
+    local_action: wait_for state=started host={{ ansible_enp0s8.ipv4.address }} port=22 timeout=30
+    sudo: false
+    when: not expected_kernel_params in actual_kernel_params.stdout

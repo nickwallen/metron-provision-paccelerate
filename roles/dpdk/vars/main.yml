@@ -1,0 +1,6 @@
+---
+dpdk_home: "/usr/local/dpdk",
+dpdk_device: ["enp0s8","enp0s9"],
+dpdk_version: "2.2.0",
+dpdk_target: "x86_64-native-linuxapp-gcc",
+num_huge_pages: 64
