@@ -1,3 +1,0 @@
----
-- name: pcap-replay
-  src: https://github.com/nickwallen/metron-provision-pcap-replay.git
