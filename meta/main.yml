@@ -10,7 +10,7 @@ galaxy_info:
   platforms:
   - name: CentOS
     versions:
-      - 6
+      - 7
 
   categories:
   - networking

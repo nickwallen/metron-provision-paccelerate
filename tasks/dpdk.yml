@@ -6,8 +6,20 @@
       creates: "/root/dpdk-{{ dpdk_version }}"
       copy: no
 
+  - name: "Configure DPDK for the target environment: {{ dpdk_target }}"
+    shell: "make config T={{ dpdk_target }} DESTDIR={{ dpdk_home }}"
+    args:
+      chdir: "/root/dpdk-{{ dpdk_version }}"
+      creates: "{{ dpdk_home }}"
+
+  - name: "Turn on debug flags"
+    lineinfile:
+      dest: "/root/dpdk-{{ dpdk_version }}/config/common_linuxapp"
+      regexp:  'DEBUG=n'
+      line: 'DEBUG=y'
+
   - name: "Build DPDK for the target environment: {{ dpdk_target }}"
-    shell: "make install T={{ dpdk_target }} DESTDIR={{ dpdk_home }}"
+    shell: "make install T={{ dpdk_target }} DESTDIR={{ dpdk_home }} EXTRA_CFLAGS={{ extra_cflags }}"
     args:
       chdir: "/root/dpdk-{{ dpdk_version }}"
       creates: "{{ dpdk_home }}"
