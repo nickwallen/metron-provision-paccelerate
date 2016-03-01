@@ -54,3 +54,9 @@
     local_action: wait_for state=started host={{ ansible_hostname }} port=22 timeout=30
     sudo: false
     when: not expected_kernel_params in actual_kernel_params.stdout
+
+  - name: Install debug utilities
+    yum: name=yum-utils state=present
+
+  - name: Install debug symbols
+    shell: debuginfo-install -y glibc
