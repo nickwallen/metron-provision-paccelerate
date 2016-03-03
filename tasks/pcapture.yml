@@ -1,0 +1,22 @@
+---
+- name: Download paccelerate
+  git: repo={{ paccelerate_git_repo }} dest={{ paccelerate_work_dir }}
+
+- name: Build paccelerate
+  shell: "{{ item }}"
+  args:
+    chdir: "{{ paccelerate_work_dir }}"
+  with_items:
+    - make
+    - mkdir -p {{ paccelerate_home_dir }}
+    - cp -r {{ paccelerate_work_dir }}/build/* {{ paccelerate_home_dir }}
+
+- name: Deploy service
+  template: src=paccelerate dest=/etc/init.d/{{ paccelerate_service }} mode=0755
+
+- name: Register the service with systemd
+  shell: systemctl enable {{ paccelerate_service }}
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: Run paccelerate
+  service: name={{ paccelerate_service }} state=restarted

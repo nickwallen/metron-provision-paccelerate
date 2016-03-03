@@ -4,3 +4,8 @@ dpdk_version: "2.2.0"
 dpdk_target: "x86_64-native-linuxapp-gcc"
 num_huge_pages: 64
 extra_cflags: -g
+paccelerate_work_dir: /tmp/paccelerate
+paccelerate_home_dir: /opt/paccelerate
+paccelerate_git_repo: https://github.com/nickwallen/paccelerate.git
+paccelerate_ld_library_path: /usr/local/lib
+paccelerate_service: paccelerate
