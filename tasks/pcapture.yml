@@ -24,12 +24,20 @@
     chdir: "{{ paccelerate_work_dir }}"
   with_items:
     - make
-    - "mkdir -p {{ paccelerate_home_dir }}"
-    - "cp -r {{ paccelerate_work_dir }}/build/* {{ paccelerate_home_dir }}"
+    - "mkdir -p {{ paccelerate_prefix }}"
+    - "cp {{ paccelerate_work_dir }}/src/build/app/pcapture {{ paccelerate_prefix }}"
   environment:
     RTE_SDK: "{{ dpdk_sdk }}"
     RTE_TARGET: "{{ dpdk_target }}"
     LD_LIBRARY_PATH: "{{ paccelerate_ld_library_path }}"
+
+- name: Install paccelerate
+  shell: "{{ item }}"
+  args:
+    chdir: "{{ paccelerate_work_dir }}"
+  with_items:
+    - "mkdir -p {{ paccelerate_prefix }}"
+    - "cp {{ paccelerate_work_dir }}/src/build/app/pcapture {{ paccelerate_prefix }}"
 
 - name: Deploy service
   template: src=paccelerate dest=/etc/init.d/{{ paccelerate_service }} mode=0755
