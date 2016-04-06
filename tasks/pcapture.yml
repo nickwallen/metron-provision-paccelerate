@@ -40,7 +40,7 @@
     - "cp {{ paccelerate_work_dir }}/src/build/app/pcapture {{ paccelerate_prefix }}"
 
 - name: Deploy service
-  template: src=paccelerate dest=/etc/init.d/{{ paccelerate_service }} mode=0755
+  template: src=paccelerate dest=/etc/init.d/ mode=0755
 
 - name: Register the service with systemd
   shell: systemctl enable {{ paccelerate_service }}

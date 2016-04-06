@@ -28,4 +28,3 @@ paccelerate_git_repo: https://github.com/nickwallen/paccelerate.git
 paccelerate_work_dir: /tmp/paccelerate
 paccelerate_prefix: /usr/local/bin
 paccelerate_ld_library_path: /usr/local/lib
-paccelerate_service: paccelerate
