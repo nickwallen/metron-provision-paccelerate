@@ -35,7 +35,7 @@ DAEMONOPTS+="-b {{ kafka_broker_url }} "
 DAEMONOPTS+="-t {{ paccelerate_topic }} "
 DAEMONOPTS+="-c {{ paccelerate_kafka_config }} "
 
-NAME="{{ paccelerate_service }}"
+NAME="paccelerate"
 DESC="Metron network packet capture probe"
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
