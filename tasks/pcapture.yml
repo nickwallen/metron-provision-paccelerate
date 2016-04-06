@@ -36,8 +36,10 @@
   args:
     chdir: "{{ paccelerate_work_dir }}"
   with_items:
-    - "mkdir -p {{ paccelerate_prefix }}"
     - "cp {{ paccelerate_work_dir }}/src/build/app/pcapture {{ paccelerate_prefix }}"
+
+- name: Deploy configuration
+  template: src=paccelerate.conf dest={{ paccelerate_kafka_config }} mode=0755
 
 - name: Deploy service
   template: src=paccelerate dest=/etc/init.d/ mode=0755
