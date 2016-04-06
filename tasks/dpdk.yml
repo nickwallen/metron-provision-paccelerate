@@ -3,25 +3,25 @@
     unarchive:
       src: "http://dpdk.org/browse/dpdk/snapshot/dpdk-{{ dpdk_version }}.tar.gz"
       dest: "/root"
-      creates: "/root/dpdk-{{ dpdk_version }}"
+      creates: "{{ dpdk_sdk }}"
       copy: no
 
   - name: "Configure DPDK for the target environment: {{ dpdk_target }}"
     shell: "make config T={{ dpdk_target }} DESTDIR={{ dpdk_home }}"
     args:
-      chdir: "/root/dpdk-{{ dpdk_version }}"
+      chdir: "{{ dpdk_sdk }}"
       creates: "{{ dpdk_home }}"
 
   - name: "Turn on debug flags"
     lineinfile:
-      dest: "/root/dpdk-{{ dpdk_version }}/config/common_linuxapp"
+      dest: "{{ dpdk_sdk }}/config/common_linuxapp"
       regexp:  'DEBUG=n'
       line: 'DEBUG=y'
 
   - name: "Build DPDK for the target environment: {{ dpdk_target }}"
     shell: "make install T={{ dpdk_target }} DESTDIR={{ dpdk_home }} EXTRA_CFLAGS={{ extra_cflags }}"
     args:
-      chdir: "/root/dpdk-{{ dpdk_version }}"
+      chdir: "{{ dpdk_sdk }}"
       creates: "{{ dpdk_home }}"
 
   - name: Load kernel modules to enable userspace IO
@@ -37,5 +37,5 @@
   - name: Set useful environment variables
     lineinfile: "dest=/root/.bash_profile line={{ item }}"
     with_items:
-      - "export RTE_SDK=/root/dpdk-{{ dpdk_version }}"
+      - "export RTE_SDK={{ dpdk_sdk }}"
       - "export RTE_TARGET={{ dpdk_target }}"

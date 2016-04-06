@@ -1,5 +1,6 @@
 ---
 dpdk_home: "/usr/local/dpdk"
+dpdk_sdk: "/root/dpdk"
 dpdk_version: "2.2.0"
 dpdk_target: "x86_64-native-linuxapp-gcc"
 num_huge_pages: 64
