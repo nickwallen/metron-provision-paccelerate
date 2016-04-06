@@ -1,12 +1,13 @@
 ---
   - name: Install dependencies
-    yum: name=* state=present
+    yum: name={{ item }}
     with_items:
       - "@Development tools"
       - pciutils
       - net-tools
       - glib2
       - glib2-devel
+      - git
 
   #
   # install prerequisite packages and the latest kernel headers.  need to
