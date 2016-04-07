@@ -22,8 +22,7 @@
 # processname: paccelerate
 #
 
-#RTE_SDK: "/opt/dpdk-{{ dpdk_version }}"
-export RTE_SDK="{{ dpdk_home }}"
+export RTE_SDK="{{ dpdk_sdk }}"
 export RTE_TARGET="{{ dpdk_target }}"
 export LD_LIBRARY_PATH="{{ paccelerate_ld_library_path }}"
 
@@ -31,7 +30,6 @@ DAEMON_PATH="/root"
 DAEMON="{{ paccelerate_prefix }}/pcapture"
 DAEMONOPTS+=" -- "
 DAEMONOPTS+="-p {{ paccelerate_portmask }} "
-DAEMONOPTS+="-b {{ kafka_broker_url }} "
 DAEMONOPTS+="-t {{ paccelerate_topic }} "
 DAEMONOPTS+="-c {{ paccelerate_kafka_config }} "
 
