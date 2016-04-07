@@ -37,6 +37,7 @@ NAME="paccelerate"
 DESC="Metron network packet capture probe"
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
+DAEMONLOG=/var/log/$NAME.log
 NOW=`date`
 
 case "$1" in
