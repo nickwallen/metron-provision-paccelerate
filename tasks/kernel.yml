@@ -52,4 +52,4 @@
     yum: name=yum-utils state=present
 
   - name: Install debug symbols
-    shell: debuginfo-install -y glibc
+    shell: debuginfo-install -y glibc glib2 zlib

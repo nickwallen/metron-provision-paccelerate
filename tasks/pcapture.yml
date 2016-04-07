@@ -24,19 +24,16 @@
     chdir: "{{ paccelerate_work_dir }}"
   with_items:
     - make
-    - "mkdir -p {{ paccelerate_prefix }}"
-    - "cp {{ paccelerate_work_dir }}/src/build/app/pcapture {{ paccelerate_prefix }}"
   environment:
     RTE_SDK: "{{ dpdk_sdk }}"
     RTE_TARGET: "{{ dpdk_target }}"
     LD_LIBRARY_PATH: "{{ paccelerate_ld_library_path }}"
 
 - name: Install paccelerate
-  shell: "{{ item }}"
+  shell: "cp {{ paccelerate_work_dir }}/src/build/app/pcapture {{ paccelerate_prefix }}"
   args:
     chdir: "{{ paccelerate_work_dir }}"
-  with_items:
-    - "cp {{ paccelerate_work_dir }}/src/build/app/pcapture {{ paccelerate_prefix }}"
+    creates: "{{ paccelerate_prefix }}/pcapture"
 
 - name: Deploy configuration
   template: src=paccelerate.conf dest={{ paccelerate_kafka_config }} mode=0755
