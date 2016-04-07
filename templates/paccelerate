@@ -26,7 +26,7 @@ export RTE_SDK="{{ dpdk_sdk }}"
 export RTE_TARGET="{{ dpdk_target }}"
 export LD_LIBRARY_PATH="{{ paccelerate_ld_library_path }}"
 
-DAEMON_PATH="/root"
+DAEMON_PATH="{{ dpdk_sdk }}"
 DAEMON="{{ paccelerate_prefix }}/pcapture"
 DAEMONOPTS+=" -- "
 DAEMONOPTS+="-p {{ paccelerate_portmask }} "
@@ -37,12 +37,14 @@ NAME="paccelerate"
 DESC="Metron network packet capture probe"
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
+NOW=`date`
 
 case "$1" in
   start)
     printf "%-50s" "Starting $NAME..."
+    echo "$NOW:  Starting $NAME..." >> $DAEMONLOG
     cd $DAEMON_PATH
-    PID=`$DAEMON $DAEMONOPTS > /dev/null 2>&1 & echo $!`
+    PID=`$DAEMON $DAEMONOPTS >> $DAEMONLOG 2>&1 & echo $!`
     if [ -z $PID ]; then
         printf "%s\n" "Fail"
     else
@@ -70,6 +72,7 @@ case "$1" in
     PID=`cat $PIDFILE`
     cd $DAEMON_PATH
     if [ -f $PIDFILE ]; then
+        echo "$NOW:  Stopping $NAME with pid=$PID" >> $DAEMONLOG
         kill -HUP $PID
         printf "%s\n" "Ok"
         rm -f $PIDFILE
