@@ -43,9 +43,9 @@
     ignore_errors: true
     when: not expected_kernel_params in actual_kernel_params.stdout
 
-  - name: Wait for reboot of '{{ ansible_hostname }}'
-    local_action: wait_for state=started host={{ ansible_hostname }} port=22 timeout=30
-    sudo: false
+  - name: Wait for reboot of '{{ inventory_hostname }}'
+    local_action: wait_for host={{ inventory_hostname }} state=started port=22 timeout=30 delay=10
+    become: false
     when: not expected_kernel_params in actual_kernel_params.stdout
 
   - name: Install debug utilities
